@@ -1,0 +1,557 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Afloat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Log a sale and see what you really earned after costs, rent and salaries, what you need to break even, and what to charge to earn more.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=Schibsted+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EDF1EF; --surface: #FFFFFF; --ink: #0F1D1A; --muted: #56645F; --line: #D8E0DD;
+    --accent: #2A4BFF; --accent-ink: #FFFFFF; --soft: #E3E9FF;
+    --price: #2A4BFF; --del: #C23B8E; --biz: #E2681F; --kept: #12915F; --loss: #C2321F;
+    --good: #12915F; --warn: #C2321F;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --paper: #0F1513; --surface: #1A1A19; --ink: #E8F0ED; --muted: #9AA8A2; --line: #2C3633; --accent: #8DA2FF; --accent-ink: #0F1513; --soft: #1E2A4A; --price: #6B82F5; --del: #CF5A9D; --biz: #D9742F; --kept: #2FA673; --loss: #E0604F; --good: #4FD59B; --warn: #FF8A7A; }
+  }
+  :root[data-theme="dark"] { --paper: #0F1513; --surface: #1A1A19; --ink: #E8F0ED; --muted: #9AA8A2; --line: #2C3633; --accent: #8DA2FF; --accent-ink: #0F1513; --soft: #1E2A4A; --price: #6B82F5; --del: #CF5A9D; --biz: #D9742F; --kept: #2FA673; --loss: #E0604F; --good: #4FD59B; --warn: #FF8A7A; }
+  html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; min-height: 100%; background: var(--paper); color: var(--ink); font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 16px; line-height: 1.5; }
+  [hidden] { display: none !important; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 22px 16px 60px; }
+  h1, h2, h3, .disp { font-family: "Schibsted Grotesk", "Hanken Grotesk", system-ui, sans-serif; letter-spacing: -0.025em; }
+  h1 { font-size: clamp(30px, 8.5vw, 44px); line-height: 1.05; margin: 0 0 10px; font-weight: 800; }
+  h2 { font-size: 20px; margin: 0 0 8px; font-weight: 700; }
+  p { margin: 0 0 10px; }
+  .lead { font-size: 18px; color: var(--muted); }
+  .hint { font-size: 14px; color: var(--muted); margin: 0; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .pos { color: var(--good); } .neg { color: var(--warn); }
+  input, select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 48px; width: 100%; }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  label.f { display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600; min-width: 0; }
+  label.f .sub { font-weight: 400; color: var(--muted); font-size: 14px; }
+  button { font: inherit; font-weight: 600; cursor: pointer; border-radius: 12px; min-height: 48px; padding: 0 20px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button.big { min-height: 56px; font-size: 17px; width: 100%; }
+  button.small { min-height: 38px; padding: 0 12px; font-size: 14px; border-radius: 10px; }
+  button.link { border: 0; background: none; min-height: 0; padding: 0; color: var(--accent); text-decoration: underline; }
+  button.danger { color: var(--warn); }
+  .stack-v { display: grid; gap: 16px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+  .err { color: var(--warn); font-size: 15px; min-height: 22px; margin: 0; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; min-height: 40px; }
+  .brand { font-family: "Schibsted Grotesk", sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
+  .steps { display: flex; gap: 6px; margin-bottom: 4px; }
+  .steps i { flex: 1; height: 6px; border-radius: 99px; background: var(--line); }
+  .steps i.on { background: var(--accent); }
+  .stepn { font-size: 14px; color: var(--muted); margin-bottom: -6px; }
+  .nav { display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-top: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { min-height: 42px; border-radius: 99px; padding: 0 16px; font-weight: 500; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .chip.add::before { content: "+ "; }
+  .money { position: relative; }
+  .money span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .money input { padding-left: 44px; }
+  .costrow { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
+  .costrow button { min-height: 48px; padding: 0 14px; }
+  .live { background: var(--soft); border-radius: 14px; padding: 14px 16px; display: grid; gap: 4px; }
+  .live .l { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+  .live .l b { font-family: "Schibsted Grotesk", sans-serif; }
+  .live .l.tot { font-size: 18px; border-top: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); padding-top: 6px; margin-top: 2px; }
+  .hero .k { color: var(--muted); font-size: 16px; }
+  .hero .num { font-size: clamp(44px, 13vw, 72px); font-weight: 800; line-height: 1; margin: 6px 0 12px; }
+  .verdict { border-radius: 14px; padding: 14px 16px; font-size: 16px; }
+  .v-good { background: color-mix(in srgb, var(--good) 14%, transparent); }
+  .v-bad { background: color-mix(in srgb, var(--warn) 12%, transparent); }
+  .v-note { background: var(--soft); }
+  .metric { display: grid; gap: 4px; }
+  .metric .v { font-family: "Schibsted Grotesk", sans-serif; font-size: 30px; font-weight: 800; line-height: 1.1; }
+  .ladder { display: grid; gap: 8px; margin-top: 8px; }
+  .rung { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); }
+  .rung.you { border-color: var(--accent); background: var(--soft); }
+  .rung b { font-family: "Schibsted Grotesk", sans-serif; font-size: 18px; }
+  .chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chart text { font-family: "Hanken Grotesk", sans-serif; fill: var(--ink); }
+  .chart .lab { fill: var(--muted); }
+  .hund { display: flex; height: 44px; border-radius: 10px; overflow: hidden; gap: 2px; }
+  .hund i { display: grid; place-items: center; color: #fff; font-style: normal; font-weight: 700; font-size: 14px; min-width: 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 14px; color: var(--muted); }
+  .legend span { display: inline-flex; gap: 6px; align-items: center; }
+  .legend b { color: var(--ink); }
+  .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+  .list { display: grid; gap: 10px; }
+  .item { text-align: left; display: grid; gap: 4px; padding: 14px 16px; min-height: 0; font-weight: 400; border-radius: 14px; }
+  .item .t { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; }
+  .item .m { font-size: 14px; color: var(--muted); }
+  .menu { display: grid; gap: 10px; }
+  .menu button { text-align: left; display: grid; gap: 2px; padding: 16px 18px; min-height: 0; font-weight: 400; border-radius: 14px; }
+  .menu button b { font-weight: 700; font-size: 17px; }
+  .menu button span { color: var(--muted); font-size: 14px; }
+  .menu button.primary span { color: inherit; opacity: .85; }
+  .bars { display: flex; align-items: flex-end; gap: 8px; height: 160px; border-bottom: 1px solid var(--line); position: relative; }
+  .bars .col { flex: 1; display: flex; align-items: flex-end; height: 100%; min-width: 0; }
+  .bars .col i { flex: 1; border-radius: 4px 4px 0 0; min-height: 2px; }
+  .bars .be { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--muted); }
+  .bars .be span { position: absolute; right: 0; top: -22px; font-size: 12px; color: var(--muted); background: var(--surface); padding: 0 4px; }
+  .mlabels { display: flex; gap: 8px; margin-top: 6px; }
+  .mlabels div { flex: 1; text-align: center; font-size: 12px; color: var(--muted); min-width: 0; }
+  .chan { display: grid; gap: 12px; }
+  .chan .top { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; margin-bottom: 4px; }
+  .meter { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .meter i { display: block; height: 100%; border-radius: 99px; }
+  .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 12px; font-size: 15px; z-index: 40; max-width: 90%; }
+  .demo { background: color-mix(in srgb, var(--biz) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--biz) 40%, var(--line)); border-radius: 12px; padding: 10px 14px; font-size: 14px; margin-bottom: 14px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 15px; }
+  table.t td { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  table.t tr:last-child td { border-bottom: 0; }
+  table.t td:last-child { text-align: right; font-weight: 600; }
+  .q { display: grid; gap: 8px; }
+  .q > b { font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar"><span class="brand">Afloat</span><span id="topRight"></span></div>
+  <div id="demoBar"></div>
+  <main id="app"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "afloat-v1";
+  var CHANNELS = ["Instagram", "WhatsApp", "TikTok", "X (Twitter)", "Referral", "Repeat customer", "Website", "Walk-in"];
+  var SALE_COSTS = ["Materials or stock", "Transport", "Accommodation", "Food", "Staff for this job", "Venue", "Packaging", "Fees"];
+  var FREQS = [["monthly", "a month"], ["yearly", "a year"], ["quarterly", "every 3 months"], ["weekly", "a week"]];
+  var CURS = [["₦", "Naira"], ["$", "Dollar"], ["£", "Pound"], ["€", "Euro"], ["GH₵", "Cedi"], ["KSh ", "Shilling"], ["CFA ", "CFA"]];
+
+  function blank() {
+    return { v: 1, demo: false, owner: "", biz: "", cur: "₦", costsDone: false,
+      costs: { rent: { a: "", f: "yearly" }, internet: { a: "", f: "monthly" }, power: { a: "", f: "monthly" }, apps: { a: "", f: "monthly" }, ads: { a: "", f: "monthly" }, paysStaff: null, staff: "", pay: "", other: [], perMonth: "" },
+      sales: [] };
+  }
+  var S = blank(), draft = null, view = { name: "home" }, toastT = null;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function num(v) { if (v === null || v === undefined || v === "") return null; var n = +String(v).replace(/[,\s]/g, ""); return isNaN(n) ? null : n; }
+  function money(n) { return (n < 0 ? "-" : "") + S.cur + Math.abs(Math.round(n || 0)).toLocaleString("en-US"); }
+  function short(n) { var a = Math.abs(n), s; if (a >= 1e6) s = (a / 1e6).toFixed(a >= 1e7 ? 0 : 2).replace(/\.?0+$/, "") + "M"; else if (a >= 1e3) s = Math.round(a / 1e3) + "k"; else s = String(Math.round(a)); return (n < 0 ? "-" : "") + S.cur + s; }
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  var NOW = new Date(), TODAY = NOW.getFullYear() + "-" + pad(NOW.getMonth() + 1) + "-" + pad(NOW.getDate()), CUR = TODAY.slice(0, 7);
+  function addM(ym, n) { var p = ym.split("-"), d = new Date(+p[0], +p[1] - 1 + n, 1); return d.getFullYear() + "-" + pad(d.getMonth() + 1); }
+  function mShort(ym) { var p = ym.split("-"); return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString("en-GB", { month: "short" }); }
+  function mLong(ym) { var p = ym.split("-"); return new Date(+p[0], +p[1] - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" }); }
+  function fDate(d) { if (!d) return ""; var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); }
+  function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function toast(m) { var t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 3000); }
+  function save() { if (S.demo) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast("This browser isn't saving. Download your report so you don't lose it."); } }
+  function load() { try { var r = localStorage.getItem(KEY); if (r) { var s = JSON.parse(r); if (s && s.v === 1) S = Object.assign(blank(), s); } } catch (e) {} }
+  function durWord(d, u) { return d + " " + (u === "hours" ? (d === 1 ? "hour" : "hours") : (d === 1 ? "day" : "days")); }
+
+  /* ---------- money math ---------- */
+  function monthlyOf(x) { var a = num(x.a) || 0; return x.f === "yearly" ? a / 12 : x.f === "quarterly" ? a / 3 : x.f === "weekly" ? a * 52 / 12 : a; }
+  function bizLines() {
+    var c = S.costs, L = [];
+    [["rent", "Rent"], ["internet", "Internet and data"], ["power", "Electricity or fuel"], ["apps", "Apps and subscriptions"], ["ads", "Ads"]].forEach(function (k) { var m = monthlyOf(c[k[0]]); if (m > 0) L.push([k[1], m]); });
+    if (c.paysStaff && num(c.staff) > 0) L.push(["Staff salaries", num(c.staff)]);
+    if (num(c.pay) > 0) L.push(["Your own pay", num(c.pay)]);
+    (c.other || []).forEach(function (o) { var m = monthlyOf(o); if (m > 0) L.push([o.n || "Other", m]); });
+    return L;
+  }
+  function bizMonthly() { return bizLines().reduce(function (t, l) { return t + l[1]; }, 0); }
+  function calc(sale) {
+    var price = num(sale.price) || 0, del = (sale.costs || []).reduce(function (t, c) { return t + (num(c.a) || 0); }, 0);
+    var month = bizMonthly(), dur = num(sale.dur) || 0, per = num(S.costs.perMonth) || 0, share = 0, how = "";
+    if (sale.kind === "service" && dur > 0 && month > 0) {
+      var rate = sale.durUnit === "hours" ? month / 160 : month / 30;
+      share = rate * dur; how = "It took " + durWord(dur, sale.durUnit) + ", and every " + (sale.durUnit === "hours" ? "working hour" : "day") + " of your business costs " + money(rate) + " (" + money(month) + " a month, over " + (sale.durUnit === "hours" ? "160 working hours" : "30 days") + ").";
+    } else if (per > 0 && month > 0) { share = month / per; how = "You make about " + per + " sales a month, so each one carries " + money(share) + " of your " + money(month) + " monthly business costs."; }
+    else if (month > 0) { share = month; how = "You didn't say how many sales you make a month, so this one is carrying the whole month's business costs. Add it under business costs."; }
+    var kept = price - del - share, contrib = price - del, breakEven = del + share;
+    return { price: price, del: del, share: share, kept: kept, contrib: contrib, month: month, breakEven: breakEven, need: contrib > 0 && month > 0 ? Math.ceil(month / contrib) : null, how: how };
+  }
+
+  /* ---------- router ---------- */
+  function go(name, extra) { view = Object.assign({ name: name }, extra || {}); draw(); try { window.scrollTo(0, 0); } catch (e) {} }
+  function draw() {
+    $("demoBar").innerHTML = S.demo ? '<div class="demo"><span>This is example data for a made-up caterer.</span><button class="small primary" type="button" data-act="leaveDemo">Start my own</button></div>' : "";
+    $("topRight").innerHTML = view.name !== "home" && S.sales.length ? '<button class="small" type="button" data-act="home">Home</button>' : "";
+    var f = { home: vHome, sale: vSale, saleCosts: vSaleCosts, biz: vBiz, result: vResult, picture: vPicture, all: vAll }[view.name] || vHome;
+    $("app").innerHTML = f();
+    var fi = $("app").querySelector("[data-focus]"); if (fi) setTimeout(function () { try { fi.focus({ preventScroll: true }); } catch (e) {} }, 30);
+  }
+  function stepsBar(n) { var h = '<div><div class="steps" aria-hidden="true">'; for (var i = 1; i <= 5; i++) h += '<i class="' + (i <= n ? "on" : "") + '"></i>'; return h + '</div></div><div class="stepn">Step ' + n + " of 5</div>"; }
+  function moneyInput(id, val, ph, attr) { return '<div class="money"><span>' + esc(S.cur.trim()) + '</span><input ' + (id ? 'id="' + id + '" ' : "") + 'type="number" inputmode="decimal" min="0" step="any" value="' + esc(val) + '" placeholder="' + esc(ph || "0") + '"' + (attr || "") + "></div>"; }
+  function chip(group, val, label, on) { return '<button type="button" class="chip" data-chip="' + group + '" data-val="' + esc(val) + '" aria-pressed="' + (on ? "true" : "false") + '">' + esc(label) + "</button>"; }
+
+  /* ---------- home ---------- */
+  function vHome() {
+    if (!S.sales.length) {
+      return '<section class="stack-v">' +
+        "<h1>Just made a sale? Find out what you really earned.</h1>" +
+        '<p class="lead">Most people only see the money that came in. Afloat takes out what the sale cost you, plus its share of your rent, internet and salaries, and shows what you actually kept.</p>' +
+        '<div class="card"><ol style="margin:0;padding-left:20px;display:grid;gap:8px">' +
+        '<li><b>Tell us about the sale.</b> <span class="hint">What you sold and what the customer paid.</span></li>' +
+        '<li><b>What it cost you.</b> <span class="hint">Materials, transport, anything you paid to deliver it.</span></li>' +
+        '<li><b>Your business costs.</b> <span class="hint">Rent, internet, salaries and your own pay. Just once.</span></li>' +
+        '<li><b>What you really earned.</b> <span class="hint">Your break-even, and what to charge to earn more.</span></li>' +
+        '<li><b>See it as a picture,</b> <span class="hint">then download it.</span></li></ol></div>' +
+        '<label class="f">Your first name <span class="sub">So we can say hello</span><input id="hOwner" type="text" maxlength="30" autocomplete="off" value="' + esc(S.owner) + '" placeholder="e.g. Tolu"></label>' +
+        '<button class="primary big" type="button" data-act="startSale">Start with my sale</button>' +
+        '<button type="button" data-act="demo">See an example first</button>' +
+        '<p class="hint">Takes about three minutes. Everything you enter stays on this device.</p></section>';
+    }
+    var last = S.sales[S.sales.length - 1], lc = calc(last);
+    return '<section class="stack-v"><h1>Welcome back' + (S.owner ? ", " + esc(S.owner) : "") + ".</h1>" +
+      '<p class="lead">Your last sale, ' + esc(last.name) + ', left you <b class="' + (lc.kept >= 0 ? "pos" : "neg") + '">' + money(lc.kept) + "</b> after everything.</p>" +
+      '<div class="menu">' +
+      '<button class="primary" type="button" data-act="startSale"><b>Log a new sale</b><span>See what it really earned you</span></button>' +
+      '<button type="button" data-act="all"><b>All my sales</b><span>' + S.sales.length + " logged. Charts, totals and where your money comes from</span></button>" +
+      '<button type="button" data-act="editBiz"><b>Update my business costs</b><span>Rent, internet, salaries and your pay: ' + money(bizMonthly()) + " a month</span></button>" +
+      '<button type="button" data-act="download"><b>Download my report</b><span>Every sale and chart, to keep or share</span></button>' +
+      "</div></section>";
+  }
+
+  /* ---------- step 1: the sale ---------- */
+  function vSale() {
+    var d = draft, isSvc = d.kind === "service";
+    return '<section class="stack-v">' + stepsBar(1) + "<h1>Tell us about the sale</h1>" +
+      '<label class="f">What did you sell?<input id="sName" type="text" maxlength="60" autocomplete="off" value="' + esc(d.name) + '" placeholder="e.g. 3-day Cotonou trip, wedding cake, logo" data-focus></label>' +
+      '<div class="q"><b>Is it a product or a service?</b><div class="chips">' + chip("kind", "product", "A product", d.kind === "product") + chip("kind", "service", "A service", d.kind === "service") + "</div></div>" +
+      (isSvc ? '<div class="two"><label class="f">How long did it take?<input id="sDur" type="number" inputmode="decimal" min="0" step="any" value="' + esc(d.dur) + '" placeholder="e.g. 3"></label><label class="f">&nbsp;<select id="sDurU"><option value="days"' + (d.durUnit !== "hours" ? " selected" : "") + '>days</option><option value="hours"' + (d.durUnit === "hours" ? " selected" : "") + ">hours</option></select></label></div>" : "") +
+      '<label class="f">What did the customer pay?<span class="sub">The total, all payments together</span>' + moneyInput("sPrice", d.price, "e.g. 1500000") + "</label>" +
+      '<label class="f">Currency<select id="sCur">' + CURS.map(function (c) { return '<option value="' + esc(c[0]) + '"' + (c[0] === S.cur ? " selected" : "") + ">" + c[1] + " (" + c[0].trim() + ")</option>"; }).join("") + "</select></label>" +
+      '<div class="q"><b>How did they find you?</b><div class="chips">' + CHANNELS.map(function (c) { return chip("chan", c, c, d.channel === c); }).join("") + "</div></div>" +
+      '<label class="f">Date of the sale<input id="sDate" type="date" value="' + esc(d.date) + '"></label>' +
+      '<p class="err" id="err" role="alert"></p>' +
+      '<div class="nav"><button type="button" data-act="home">Back</button><button class="primary" type="button" data-act="toSaleCosts">Next: what it cost you</button></div></section>';
+  }
+  function readSale() {
+    if (!$("sName")) return;
+    draft.name = $("sName").value.trim(); draft.price = $("sPrice").value; draft.date = $("sDate").value || draft.date; S.cur = $("sCur").value;
+    if ($("sDur")) { draft.dur = $("sDur").value; draft.durUnit = $("sDurU").value; }
+  }
+
+  /* ---------- step 2: sale costs ---------- */
+  function vSaleCosts() {
+    var d = draft, used = d.costs.map(function (x) { return x.n; });
+    return '<section class="stack-v">' + stepsBar(2) + "<h1>What did it cost you to deliver?</h1>" +
+      '<p class="lead">Only what you spent on this sale. Rent, internet and salaries come next.</p>' +
+      '<div class="q"><b>Tap to add a cost</b><div class="chips">' + SALE_COSTS.filter(function (n) { return used.indexOf(n) < 0; }).map(function (n) { return '<button type="button" class="chip add" data-act="addCost" data-val="' + esc(n) + '">' + esc(n) + "</button>"; }).join("") + '<button type="button" class="chip add" data-act="addCost" data-val="">Something else</button></div></div>' +
+      '<div style="display:grid;gap:8px" id="costRows">' + d.costs.map(function (x, i) {
+        return '<div class="costrow"><input type="text" maxlength="40" data-cn="' + i + '" value="' + esc(x.n) + '" placeholder="What" aria-label="Cost name">' + moneyInput("", x.a, "0", ' data-ca="' + i + '" aria-label="Amount"' + (i === d.costs.length - 1 && !x.a ? " data-focus" : "")) + '<button type="button" class="danger" data-act="rmCost" data-val="' + i + '" aria-label="Remove ' + esc(x.n || "cost") + '">✕</button></div>';
+      }).join("") + "</div>" +
+      (d.costs.length ? "" : '<p class="hint">Nothing added yet. If it only cost you your time, tap Next.</p>') +
+      '<div class="live" id="saleLive">' + saleLive() + "</div>" +
+      '<p class="err" id="err" role="alert"></p>' +
+      '<div class="nav"><button type="button" data-act="backSale">Back</button><button class="primary" type="button" data-act="toBiz">Next: your business costs</button></div></section>';
+  }
+  function saleLive() {
+    var price = num(draft.price) || 0, del = draft.costs.reduce(function (t, c) { return t + (num(c.a) || 0); }, 0);
+    return '<div class="l"><span>Customer paid</span><b class="tnum">' + money(price) + '</b></div><div class="l"><span>Cost to deliver</span><b class="tnum">-' + money(del) + '</b></div><div class="l tot"><span>Left before business costs</span><b class="tnum ' + (price - del < 0 ? "neg" : "") + '">' + money(price - del) + "</b></div>";
+  }
+  function readCosts() {
+    if (!$("costRows")) return;
+    document.querySelectorAll("[data-cn]").forEach(function (el) { draft.costs[+el.getAttribute("data-cn")].n = el.value; });
+    document.querySelectorAll("[data-ca]").forEach(function (el) { draft.costs[+el.getAttribute("data-ca")].a = el.value; });
+  }
+
+  /* ---------- step 3: business costs ---------- */
+  function freqSel(key, f) { return '<select data-freq="' + key + '" aria-label="How often">' + FREQS.map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === f ? " selected" : "") + ">" + x[1] + "</option>"; }).join("") + "</select>"; }
+  function bizRow(key, label, sub) {
+    var c = S.costs[key];
+    return '<div class="q"><b>' + label + (sub ? ' <span class="hint" style="font-weight:400">' + sub + "</span>" : "") + '</b><div class="two">' + moneyInput("", c.a, "0", ' data-biz="' + key + '" aria-label="' + esc(label) + '"') + freqSel(key, c.f) + "</div></div>";
+  }
+  function vBiz() {
+    var c = S.costs, fromSale = view.fromSale;
+    return '<section class="stack-v">' + (fromSale ? stepsBar(3) : "") + "<h1>Your business costs</h1>" +
+      '<p class="lead">' + (S.costsDone ? "Saved from last time. Change anything that's moved." : "The bills you pay whether or not you make a sale. Leave blank anything that doesn't apply.") + "</p>" +
+      '<div class="card stack-v">' +
+      bizRow("rent", "Rent", "Office, shop or workspace. Yearly is fine.") +
+      bizRow("internet", "Internet and data") +
+      bizRow("power", "Electricity or fuel") +
+      '<div class="q"><b>Do you pay salaries?</b><div class="chips">' + chip("staff", "yes", "Yes", c.paysStaff === true) + chip("staff", "no", "No, just me", c.paysStaff === false) + "</div>" +
+      (c.paysStaff ? '<label class="f"><span class="sub">All salaries together, each month</span>' + moneyInput("bStaff", c.staff, "0") + "</label>" : "") + "</div>" +
+      '<label class="f">Your own pay each month <span class="sub">What you want to take home. Leave it out and your profit looks better than it is.</span>' + moneyInput("bPay", c.pay, "e.g. 400000") + "</label>" +
+      bizRow("apps", "Apps and subscriptions", "Canva, Bumpa, phone plans") +
+      bizRow("ads", "Ads") +
+      (c.other || []).map(function (o, i) { return '<div class="q"><div class="costrow"><input type="text" maxlength="40" data-on="' + i + '" value="' + esc(o.n) + '" placeholder="What" aria-label="Cost name">' + moneyInput("", o.a, "0", ' data-oa="' + i + '" aria-label="Amount"') + '<button type="button" class="danger" data-act="rmOther" data-val="' + i + '" aria-label="Remove">✕</button></div>' + freqSel("o" + i, o.f) + "</div>"; }).join("") +
+      '<button type="button" class="small" data-act="addOther" style="justify-self:start">+ Add another cost</button>' +
+      "</div>" +
+      '<label class="f">How many sales do you make in a normal month? <span class="sub">Shares your costs fairly across sales. Services with a length use days or hours instead.</span><input type="number" inputmode="numeric" min="0" step="1" id="bPer" value="' + esc(c.perMonth) + '" placeholder="e.g. 8"></label>' +
+      '<div class="live" id="bizLive">' + bizLive() + "</div>" +
+      '<p class="err" id="err" role="alert"></p>' +
+      '<div class="nav"><button type="button" data-act="' + (fromSale ? "backSaleCosts" : (view.back === "result" ? "backResult" : "home")) + '">Back</button><button class="primary" type="button" data-act="' + (fromSale ? "finishSale" : "saveBiz") + '">' + (fromSale ? "See what I really earned" : "Save my costs") + "</button></div></section>";
+  }
+  function bizLive() { var m = bizMonthly(); return '<div class="l"><span>Your business costs a month</span><b class="tnum">' + money(m) + '</b></div><div class="l"><span>That\'s every day</span><b class="tnum">' + money(m / 30) + "</b></div>"; }
+  function readBiz() {
+    if (!$("bPay")) return;
+    document.querySelectorAll("[data-biz]").forEach(function (el) { S.costs[el.getAttribute("data-biz")].a = el.value; });
+    document.querySelectorAll("[data-on]").forEach(function (el) { S.costs.other[+el.getAttribute("data-on")].n = el.value; });
+    document.querySelectorAll("[data-oa]").forEach(function (el) { S.costs.other[+el.getAttribute("data-oa")].a = el.value; });
+    document.querySelectorAll("[data-freq]").forEach(function (el) { var k = el.getAttribute("data-freq"); if (/^o\d+$/.test(k)) S.costs.other[+k.slice(1)].f = el.value; else S.costs[k].f = el.value; });
+    if ($("bStaff")) S.costs.staff = $("bStaff").value;
+    S.costs.pay = $("bPay").value; S.costs.perMonth = $("bPer").value;
+  }
+
+  /* ---------- step 4: what you really earned ---------- */
+  function currentSale() { return view.id ? S.sales.filter(function (s) { return s.id === view.id; })[0] : S.sales[S.sales.length - 1]; }
+  function vResult() {
+    var s = currentSale(); if (!s) return vHome();
+    var c = calc(s), fresh = view.fresh, noPay = !(num(S.costs.pay) > 0);
+    var ladder = [["Just break even", c.breakEven], ["Keep 20% as profit", c.breakEven / 0.8], ["Keep 35% as profit", c.breakEven / 0.65]];
+    return '<section class="stack-v">' + (fresh ? stepsBar(4) : "") +
+      '<div class="hero"><div class="k">From ' + esc(s.name) + ", you really kept</div>" +
+      '<div class="num disp tnum ' + (c.kept < 0 ? "neg" : "pos") + '">' + money(c.kept) + "</div>" +
+      '<div class="verdict ' + (c.kept >= 0 ? "v-good" : "v-bad") + '">' + (c.kept >= 0 ? "That's " + Math.round(c.kept / (c.price || 1) * 100) + "% of the " + money(c.price) + " the customer paid, after delivery costs and this sale's share of your rent, salaries and bills." : "This sale didn't cover its share of your business costs. It was " + money(-c.kept) + " short.") + "</div></div>" +
+      '<div class="card"><table class="t"><tr><td>Customer paid</td><td class="tnum">' + money(c.price) + "</td></tr>" +
+      '<tr><td>Cost to deliver it</td><td class="tnum">-' + money(c.del) + "</td></tr>" +
+      '<tr><td>Its share of rent, salaries and bills</td><td class="tnum">-' + money(c.share) + "</td></tr>" +
+      '<tr><td><b>What you kept</b></td><td class="tnum ' + (c.kept < 0 ? "neg" : "") + '">' + money(c.kept) + "</td></tr></table>" +
+      (c.how ? '<p class="hint" style="margin-top:10px">' + esc(c.how) + "</p>" : "") + "</div>" +
+      (noPay ? '<div class="verdict v-note">You haven\'t added your own pay, so this looks better than it really is. <button class="link" type="button" data-act="editBizFromResult">Add your pay</button></div>' : "") +
+      '<div class="card metric"><div class="hint">To break even, this sale needed at least</div><div class="v tnum">' + money(c.breakEven) + '</div><div class="hint">' + money(c.del) + " to deliver it, plus " + money(c.share) + " towards your business costs.</div></div>" +
+      '<div class="card metric"><div class="hint">To cover a whole month of business costs (' + money(c.month) + ")</div>" +
+      (c.need ? '<div class="v tnum">' + c.need + " sale" + (c.need === 1 ? "" : "s") + ' like this</div><div class="hint">Each one leaves ' + money(c.contrib) + " after its own delivery costs.</div>" : c.month > 0 ? '<div class="v neg">Not at this price</div><div class="hint">It cost more to deliver than the customer paid.</div>' : '<div class="hint">Add your business costs to see this.</div>') + "</div>" +
+      '<div class="card"><h2>To earn more, charge</h2><div class="ladder">' + ladder.map(function (r) { return '<div class="rung"><span>' + r[0] + '</span><b class="tnum">' + money(r[1]) + "</b></div>"; }).join("") +
+      '<div class="rung you"><span>You charged</span><b class="tnum">' + money(c.price) + "</b></div></div></div>" +
+      '<div class="nav"><button type="button" data-act="' + (fresh ? "backToBiz" : "all") + '">Back</button><button class="primary" type="button" data-act="picture">Next: see it as a picture</button></div></section>';
+  }
+
+  /* ---------- step 5: picture + download ---------- */
+  function waterfallSVG(c, rep) {
+    var W = 360, top = 30, bot = 190, H = 240, colW = 66, gap = (W - colW * 4) / 3;
+    var after = c.price - c.del - c.share, lo = Math.min(0, after, c.price - c.del), hi = Math.max(c.price, 1);
+    function y(v) { return top + (hi - v) / (hi - lo) * (bot - top); }
+    var col = rep ? { price: "#2A4BFF", del: "#C23B8E", biz: "#E2681F", kept: "#12915F", loss: "#C2321F", ink: "#111", mut: "#555", line: "#ccc" } : { price: "var(--price)", del: "var(--del)", biz: "var(--biz)", kept: "var(--kept)", loss: "var(--loss)", ink: "var(--ink)", mut: "var(--muted)", line: "var(--line)" };
+    var bars = [
+      ["Customer", "paid", 0, c.price, col.price, short(c.price)],
+      ["Cost to", "deliver", c.price - c.del, c.price, col.del, "-" + short(c.del)],
+      ["Business", "costs", after, c.price - c.del, col.biz, "-" + short(c.share)],
+      ["You", "kept", Math.min(0, c.kept), Math.max(0, c.kept), c.kept >= 0 ? col.kept : col.loss, short(c.kept)]
+    ];
+    var o = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Customer paid ' + money(c.price) + ", cost to deliver " + money(c.del) + ", business costs " + money(c.share) + ", you kept " + money(c.kept) + '">';
+    o += '<line x1="0" x2="' + W + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="' + col.line + '"/>';
+    bars.forEach(function (b, i) {
+      var x = i * (colW + gap), y1 = y(Math.max(b[2], b[3])), y2 = y(Math.min(b[2], b[3])), h = Math.max(3, y2 - y1);
+      o += '<rect x="' + x + '" y="' + y1 + '" width="' + colW + '" height="' + h + '" rx="4" fill="' + b[4] + '"><title>' + b[0] + " " + b[1] + ": " + esc(b[5]) + "</title></rect>";
+      o += '<text x="' + (x + colW / 2) + '" y="' + (y1 - 8) + '" text-anchor="middle" font-size="14" font-weight="700" fill="' + col.ink + '">' + esc(b[5]) + "</text>";
+      o += '<text x="' + (x + colW / 2) + '" y="' + (bot + 24) + '" text-anchor="middle" font-size="12" fill="' + col.mut + '">' + b[0] + '</text><text x="' + (x + colW / 2) + '" y="' + (bot + 39) + '" text-anchor="middle" font-size="12" fill="' + col.mut + '">' + b[1] + "</text>";
+      if (i < 3) { var ny = [y(c.price), y(c.price - c.del), y(after)][i]; o += '<line x1="' + (x + colW) + '" x2="' + (x + colW + gap) + '" y1="' + ny + '" y2="' + ny + '" stroke="' + col.mut + '" stroke-dasharray="3 3"/>'; }
+    });
+    return o + "</svg>";
+  }
+  function hundredBar(c, rep) {
+    if (c.price <= 0) return "";
+    var parts = [[c.del, rep ? "#C23B8E" : "var(--del)", "Cost to deliver"], [c.share, rep ? "#E2681F" : "var(--biz)", "Business costs"], [Math.max(0, c.kept), rep ? "#12915F" : "var(--kept)", "You kept"]];
+    var tot = Math.max(c.price, parts.reduce(function (t, p) { return t + p[0]; }, 0));
+    var vals = parts.map(function (p) { return Math.round(p[0] / c.price * 100); });
+    return '<div class="hund" role="img" aria-label="Out of every 100: ' + parts.map(function (p, i) { return p[2] + " " + vals[i]; }).join(", ") + '">' +
+      parts.map(function (p, i) { return p[0] > 0 ? '<i style="flex:' + (p[0] / tot) + " 1 0;background:" + p[1] + '" title="' + p[2] + ": " + vals[i] + '">' + (p[0] / tot > 0.09 ? vals[i] : "") + "</i>" : ""; }).join("") + "</div>" +
+      '<div class="legend">' + parts.map(function (p, i) { return '<span><i class="sw" style="background:' + p[1] + '"></i>' + p[2] + " <b>" + S.cur.trim() + vals[i] + "</b></span>"; }).join("") + "</div>" +
+      (c.kept < 0 ? '<p class="hint" style="margin-top:6px">Costs came to more than the customer paid, so nothing was kept.</p>' : "");
+  }
+  function monthStats(ym) {
+    var list = S.sales.filter(function (s) { return (s.date || "").slice(0, 7) === ym; }), inn = 0, del = 0;
+    list.forEach(function (s) { var c = calc(s); inn += c.price; del += c.del; });
+    return { n: list.length, inn: inn, contrib: inn - del, month: bizMonthly() };
+  }
+  function monthCard(ym) {
+    var m = monthStats(ym); if (!m.n || m.month <= 0) return "";
+    var p = Math.max(0, Math.min(100, m.contrib / m.month * 100));
+    return '<div class="card"><h2>' + mLong(ym) + " so far</h2>" +
+      '<div class="meter" style="height:14px" role="img" aria-label="' + Math.round(p) + '% of monthly business costs covered"><i style="width:' + p + '%;background:var(--kept)"></i></div>' +
+      '<p style="margin:10px 0 0">' + (m.contrib >= m.month ? "<b>This month's costs are covered.</b> Every sale from here is profit." : m.n + " sale" + (m.n === 1 ? " has" : "s have") + " covered <b>" + Math.round(p) + "%</b> of this month's " + money(m.month) + " in business costs. " + money(m.month - m.contrib) + " to go.") + "</p></div>";
+  }
+  function vPicture() {
+    var s = currentSale(); if (!s) return vHome();
+    var c = calc(s), fresh = view.fresh;
+    return '<section class="stack-v">' + (fresh ? stepsBar(5) : "") + "<h1>Where the money went</h1>" +
+      '<p class="lead">' + esc(s.name) + ": " + money(c.price) + " came in, " + money(c.kept) + " stayed with you.</p>" +
+      '<div class="card chart">' + waterfallSVG(c) + "</div>" +
+      '<div class="card"><h2>Out of every ' + S.cur.trim() + "100 the customer paid</h2>" + hundredBar(c) + "</div>" +
+      monthCard((s.date || TODAY).slice(0, 7)) +
+      '<div class="card stack-v"><h2>Keep it</h2><p class="hint">The report has these charts and numbers. It opens in any browser, and you can print it or save it as a PDF.</p>' +
+      '<button class="primary" type="button" data-act="downloadOne">Download this sale\'s report</button>' +
+      '<button type="button" data-act="downloadCsv">Download all sales as a spreadsheet</button></div>' +
+      '<div class="menu"><button class="primary" type="button" data-act="startSale"><b>Log another sale</b><span>Your business costs are saved, so it\'s quicker now</span></button>' +
+      '<button type="button" data-act="all"><b>See all my sales</b><span>Monthly chart, totals and where your money comes from</span></button></div></section>';
+  }
+
+  /* ---------- all sales ---------- */
+  function vAll() {
+    if (!S.sales.length) return vHome();
+    var ms = []; for (var i = 5; i >= 0; i--) ms.push(addM(CUR, -i));
+    var stats = ms.map(monthStats), be = bizMonthly(), mx = Math.max.apply(null, stats.map(function (s) { return s.inn; }).concat([be, 1]));
+    var tot = { inn: 0, kept: 0 };
+    S.sales.forEach(function (s) { var c = calc(s); tot.inn += c.price; tot.kept += c.kept; });
+    var by = {}; S.sales.forEach(function (s) { var k = s.channel || "Not recorded", c = calc(s), x = by[k] || (by[k] = { kept: 0, n: 0 }); x.kept += c.kept; x.n++; });
+    var ks = Object.keys(by).sort(function (a, b) { return by[b].kept - by[a].kept; }), maxK = Math.max.apply(null, ks.map(function (k) { return Math.max(0, by[k].kept); }).concat([1]));
+    return '<section class="stack-v"><h1>All my sales</h1>' +
+      '<div class="two"><div class="card metric"><div class="hint">Customers paid</div><div class="v tnum" style="font-size:26px">' + short(tot.inn) + '</div></div><div class="card metric"><div class="hint">You really kept</div><div class="v tnum ' + (tot.kept < 0 ? "neg" : "pos") + '" style="font-size:26px">' + short(tot.kept) + "</div></div></div>" +
+      monthCard(CUR) +
+      '<div class="card"><h2>Money in each month</h2><p class="hint" style="margin-bottom:14px">The dashed line is a month of business costs (' + money(be) + "). Bars above it mean that month broke even.</p>" +
+      '<div class="bars" role="img" aria-label="Money in by month, against monthly business costs">' + stats.map(function (s, i) { return '<div class="col"><i style="height:' + (s.inn / mx * 100) + "%;background:" + (be > 0 && s.contrib >= be ? "var(--kept)" : "var(--price)") + '" title="' + mLong(ms[i]) + ": " + money(s.inn) + " from " + s.n + " sale" + (s.n === 1 ? "" : "s") + '"></i></div>'; }).join("") +
+      (be > 0 ? '<div class="be" style="bottom:' + (be / mx * 100) + '%"><span>Costs ' + short(be) + "</span></div>" : "") + "</div>" +
+      '<div class="mlabels">' + stats.map(function (s, i) { return "<div>" + mShort(ms[i]) + '<br><b style="color:var(--ink)">' + (s.inn ? short(s.inn) : "–") + "</b></div>"; }).join("") + "</div>" +
+      '<div class="legend"><span><i class="sw" style="background:var(--kept)"></i>Covered its costs</span><span><i class="sw" style="background:var(--price)"></i>Didn\'t yet</span></div></div>' +
+      '<div class="card"><h2>Where your money comes from</h2><p class="hint" style="margin-bottom:12px">Ranked by what you really kept. Double down on the top one.</p><div class="chan">' +
+      ks.map(function (k, i) { var x = by[k]; return '<div><div class="top"><span><b>' + esc(k) + '</b> <span class="hint">' + x.n + " sale" + (x.n === 1 ? "" : "s") + '</span></span><span class="tnum ' + (x.kept < 0 ? "neg" : "") + '"><b>' + short(x.kept) + '</b> kept</span></div><div class="meter"><i style="width:' + (Math.max(0, x.kept) / maxK * 100) + "%;background:" + (i === 0 ? "var(--kept)" : "var(--price)") + '"></i></div></div>'; }).join("") + "</div></div>" +
+      '<h2 style="margin:6px 0 0">Your sales</h2><div class="list">' + S.sales.slice().reverse().map(function (s) { var c = calc(s); return '<button type="button" class="item" data-act="openSale" data-val="' + esc(s.id) + '"><span class="t"><span>' + esc(s.name) + '</span><span class="tnum ' + (c.kept < 0 ? "neg" : "pos") + '">' + short(c.kept) + ' kept</span></span><span class="m">' + esc([fDate(s.date), money(c.price) + " paid", s.channel].filter(Boolean).join(", ")) + "</span></button>"; }).join("") + "</div>" +
+      '<div class="menu"><button class="primary" type="button" data-act="startSale"><b>Log a new sale</b><span>See what it really earned you</span></button>' +
+      '<button type="button" data-act="download"><b>Download my report</b><span>Every sale with its charts, to keep or share</span></button>' +
+      '<button type="button" data-act="downloadCsv"><b>Download as a spreadsheet</b><span>A CSV file for Excel or Google Sheets</span></button>' +
+      '<button type="button" data-act="editBiz"><b>Update my business costs</b><span>' + money(be) + " a month</span></button>" +
+      (S.demo ? "" : '<button type="button" data-act="reset"><b class="neg">Delete everything</b><span>Removes all sales and costs from this device</span></button>') + "</div></section>";
+  }
+
+  /* ---------- downloads ---------- */
+  async function saveFile(name, text, mime) {
+    var cl = window.claude;
+    if (cl && cl.use) { try { var dl = await cl.use("downloads"); if (dl) { await dl.save({ filename: name, data: text, mimeType: mime }); return; } } catch (e) { if (e && e.code === "declined") return; } }
+    try { var b = new Blob([text], { type: mime }), u = URL.createObjectURL(b), a = document.createElement("a"); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 2000); toast("Downloaded."); }
+    catch (e) { toast("Your browser blocked the download."); }
+  }
+  function reportHTML(sales) {
+    var title = (S.biz || (S.owner ? S.owner + "'s business" : "My business")) + ": what I really earned";
+    var css = "body{font-family:Helvetica,Arial,sans-serif;color:#111;max-width:680px;margin:30px auto;padding:0 16px;line-height:1.5}h1{font-size:26px;margin:0 0 4px}h2{font-size:20px;margin:24px 0 4px}.m{color:#555;font-size:14px}table{width:100%;border-collapse:collapse;margin:8px 0}td{padding:6px 0;border-bottom:1px solid #ddd}td:last-child{text-align:right;font-weight:600}.k{font-size:32px;font-weight:800;margin:6px 0}.g{color:#12915F}.r{color:#C2321F}.hund{display:flex;height:34px;border-radius:8px;overflow:hidden;gap:2px}.hund i{display:grid;place-items:center;color:#fff;font-style:normal;font-weight:700;font-size:13px}.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:#555;margin-top:6px}.legend span{display:inline-flex;gap:6px;align-items:center}.sw{width:11px;height:11px;border-radius:3px;display:inline-block}svg{width:100%;max-width:480px;height:auto;display:block;margin:12px 0}.sale{page-break-inside:avoid;border-top:2px solid #eee;margin-top:20px;padding-top:4px}.hint{color:#555;font-size:13px}";
+    var h = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(title) + "</title><style>" + css + "</style></head><body>" +
+      "<h1>" + esc(title) + '</h1><div class="m">Made with Afloat on ' + fDate(TODAY) + "</div>" +
+      "<h2>Business costs each month</h2><table>" + bizLines().map(function (l) { return "<tr><td>" + esc(l[0]) + "</td><td>" + money(l[1]) + "</td></tr>"; }).join("") + "<tr><td><b>Total</b></td><td>" + money(bizMonthly()) + "</td></tr></table>";
+    sales.forEach(function (s) {
+      var c = calc(s);
+      h += '<div class="sale"><h2>' + esc(s.name) + '</h2><div class="m">' + esc([fDate(s.date), s.channel ? "Found you on " + s.channel : "", s.kind === "service" && num(s.dur) ? durWord(num(s.dur), s.durUnit) : ""].filter(Boolean).join(", ")) + "</div>" +
+        '<div class="k ' + (c.kept < 0 ? "r" : "g") + '">' + money(c.kept) + " kept</div>" + waterfallSVG(c, true) +
+        "<table><tr><td>Customer paid</td><td>" + money(c.price) + "</td></tr>" + (s.costs || []).map(function (x) { return "<tr><td>&nbsp;&nbsp;" + esc(x.n || "Cost") + "</td><td>-" + money(num(x.a) || 0) + "</td></tr>"; }).join("") +
+        "<tr><td>Cost to deliver, total</td><td>-" + money(c.del) + "</td></tr><tr><td>Share of rent, salaries and bills</td><td>-" + money(c.share) + "</td></tr><tr><td><b>What you kept</b></td><td>" + money(c.kept) + "</td></tr><tr><td>Needed to break even</td><td>" + money(c.breakEven) + "</td></tr><tr><td>Price to keep 20% as profit</td><td>" + money(c.breakEven / 0.8) + "</td></tr></table>" +
+        '<p class="m">' + esc(c.how) + '</p><p class="m">Out of every ' + S.cur.trim() + "100 the customer paid:</p>" + hundredBar(c, true) + "</div>";
+    });
+    return h + "</body></html>";
+  }
+  function csv() {
+    var rows = [["Date", "Sale", "Product or service", "Length", "Found you on", "Customer paid", "Cost to deliver", "Share of business costs", "Kept", "Break-even price"]];
+    S.sales.forEach(function (s) { var c = calc(s); rows.push([s.date, s.name, s.kind, s.kind === "service" && num(s.dur) ? durWord(num(s.dur), s.durUnit) : "", s.channel, Math.round(c.price), Math.round(c.del), Math.round(c.share), Math.round(c.kept), Math.round(c.breakEven)]); });
+    return rows.map(function (r) { return r.map(function (v) { var x = v === null || v === undefined ? "" : String(v); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(","); }).join("\n");
+  }
+  function slug(t) { return (t || "sale").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase(); }
+
+  /* ---------- events ---------- */
+  var resetArmed = false;
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    var chipG = b.getAttribute("data-chip");
+    if (chipG) {
+      var v = b.getAttribute("data-val");
+      if (chipG === "kind") { readSale(); draft.kind = v; draw(); }
+      else if (chipG === "chan") { readSale(); draft.channel = draft.channel === v ? "" : v; draw(); }
+      else if (chipG === "staff") { readBiz(); S.costs.paysStaff = v === "yes"; draw(); }
+      return;
+    }
+    var act = b.getAttribute("data-act"); if (!act) return;
+    var val = b.getAttribute("data-val"), err = $("err");
+    switch (act) {
+      case "home": readSale(); readBiz(); go("home"); break;
+      case "startSale":
+        if ($("hOwner")) S.owner = $("hOwner").value.trim();
+        draft = { id: newId(), name: "", kind: "", price: "", dur: "", durUnit: "days", channel: "", date: TODAY, costs: [] };
+        go("sale"); break;
+      case "toSaleCosts":
+        readSale();
+        if (!draft.name) { err.textContent = "Say what you sold."; return; }
+        if (!draft.kind) { err.textContent = "Choose product or service."; return; }
+        if (!(num(draft.price) > 0)) { err.textContent = "Enter what the customer paid."; return; }
+        if (num(draft.dur) !== null && num(draft.dur) < 0) { err.textContent = "The length can't be negative."; return; }
+        go("saleCosts"); break;
+      case "backSale": readCosts(); go("sale"); break;
+      case "addCost": readCosts(); draft.costs.push({ n: val || "", a: "" }); draw(); break;
+      case "rmCost": readCosts(); draft.costs.splice(+val, 1); draw(); break;
+      case "toBiz":
+        readCosts();
+        if (draft.costs.some(function (c) { return num(c.a) !== null && num(c.a) < 0; })) { err.textContent = "Costs can't be negative."; return; }
+        draft.costs = draft.costs.filter(function (c) { return num(c.a) > 0; });
+        go("biz", { fromSale: true }); break;
+      case "backSaleCosts": readBiz(); go("saleCosts"); break;
+      case "addOther": readBiz(); S.costs.other.push({ n: "", a: "", f: "monthly" }); draw(); break;
+      case "rmOther": readBiz(); S.costs.other.splice(+val, 1); draw(); break;
+      case "finishSale":
+        readBiz();
+        if (!bizValid()) return;
+        S.costsDone = true;
+        var idx = -1; S.sales.forEach(function (x, i) { if (x.id === draft.id) idx = i; });
+        if (idx >= 0) S.sales[idx] = draft; else S.sales.push(draft);
+        save(); go("result", { id: draft.id, fresh: true }); break;
+      case "saveBiz": readBiz(); if (!bizValid()) return; S.costsDone = true; save(); toast("Business costs saved."); if (view.back === "result") go("result", { id: view.id }); else go("home"); break;
+      case "backResult": readBiz(); go("result", { id: view.id }); break;
+      case "editBiz": go("biz", { fromSale: false }); break;
+      case "editBizFromResult": go("biz", { fromSale: false, back: "result", id: view.id }); break;
+      case "backToBiz": draft = currentSale(); go("biz", { fromSale: true }); break;
+      case "picture": go("picture", { id: view.id, fresh: view.fresh }); break;
+      case "all": go("all"); break;
+      case "openSale": go("result", { id: val }); break;
+      case "downloadOne": var s1 = currentSale(); saveFile("afloat-" + slug(s1.name) + ".html", reportHTML([s1]), "text/html"); break;
+      case "download": saveFile("afloat-report-" + TODAY + ".html", reportHTML(S.sales), "text/html"); break;
+      case "downloadCsv": saveFile("afloat-sales-" + TODAY + ".csv", csv(), "text/csv"); break;
+      case "demo": if ($("hOwner")) S.owner = $("hOwner").value.trim(); S = makeDemo(); go("all"); break;
+      case "leaveDemo": S = blank(); load(); if (S.demo) S = blank(); go("home"); break;
+      case "reset":
+        if (!resetArmed) { resetArmed = true; b.querySelector("b").textContent = "Tap again to delete everything"; setTimeout(function () { resetArmed = false; }, 3500); return; }
+        resetArmed = false; S = blank(); save(); go("home"); toast("Everything deleted."); break;
+    }
+  });
+  function bizValid() {
+    var bad = Object.keys(S.costs).some(function (k) { var x = S.costs[k]; return x && typeof x === "object" && !Array.isArray(x) && num(x.a) !== null && num(x.a) < 0; }) ||
+      [S.costs.staff, S.costs.pay, S.costs.perMonth].some(function (x) { return num(x) !== null && num(x) < 0; }) ||
+      (S.costs.other || []).some(function (o) { return num(o.a) !== null && num(o.a) < 0; });
+    if (bad) { $("err").textContent = "Amounts can't be negative."; return false; }
+    return true;
+  }
+  document.addEventListener("input", function () {
+    if (view.name === "saleCosts") { readCosts(); $("saleLive").innerHTML = saleLive(); }
+    if (view.name === "biz") { readBiz(); $("bizLive").innerHTML = bizLive(); }
+  });
+  document.addEventListener("change", function (e) {
+    if (view.name === "biz") { readBiz(); $("bizLive").innerHTML = bizLive(); }
+    if (view.name === "sale" && e.target.id === "sCur") { readSale(); draw(); }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.tagName === "INPUT") { var p = $("app").querySelector(".nav .primary"); if (p) { e.preventDefault(); p.click(); } }
+  });
+
+  /* ---------- example data ---------- */
+  function makeDemo() {
+    var s = blank(); s.demo = true; s.owner = "Ada"; s.biz = "Ada's Kitchen"; s.costsDone = true;
+    s.costs.rent = { a: "1800000", f: "yearly" }; s.costs.internet = { a: "25000", f: "monthly" }; s.costs.power = { a: "40000", f: "monthly" };
+    s.costs.paysStaff = true; s.costs.staff = "120000"; s.costs.pay = "300000"; s.costs.apps = { a: "15000", f: "monthly" }; s.costs.ads = { a: "30000", f: "monthly" }; s.costs.perMonth = "8";
+    function d(m, day) { return addM(CUR, m) + "-" + pad(day); }
+    function sale(name, date, kind, price, dur, chan, costs) { return { id: newId(), name: name, date: date, kind: kind, price: String(price), dur: dur ? String(dur) : "", durUnit: "days", channel: chan, costs: costs.map(function (c) { return { n: c[0], a: String(c[1]) }; }) }; }
+    s.sales = [
+      sale("Office party small chops", d(-3, 12), "service", 450000, 1, "Referral", [["Materials or stock", 180000], ["Staff for this job", 40000], ["Transport", 15000]]),
+      sale("Wedding catering, 150 guests", d(-2, 6), "service", 1500000, 3, "Instagram", [["Materials or stock", 520000], ["Staff for this job", 150000], ["Transport", 60000], ["Venue", 70000]]),
+      sale("Birthday cake", d(-2, 20), "product", 85000, 0, "WhatsApp", [["Materials or stock", 32000], ["Packaging", 6000]]),
+      sale("Corporate lunch boxes", d(-1, 9), "service", 600000, 1, "Repeat customer", [["Materials or stock", 260000], ["Packaging", 30000], ["Transport", 20000]]),
+      sale("Baby shower dessert table", d(-1, 23), "service", 380000, 2, "TikTok", [["Materials or stock", 140000], ["Transport", 25000]]),
+      sale("Two birthday cakes", d(0, 3), "product", 160000, 0, "WhatsApp", [["Materials or stock", 60000], ["Packaging", 10000]])
+    ];
+    return s;
+  }
+
+  load(); draw();
+})();
+</script>
+</body>
+</html>
+
+</body></html>
